@@ -24,6 +24,34 @@ DOCUMENTATION — If the person is escorted to an ER or stabilization center, no
 Z65.8 — Moral, Religious or Spiritual Problem
 This code was approved by the APA Board and DSM Steering Committee in December 2024.
 
+HANDOFF PROTOCOL — When someone must be arrested, hospitalized, or removed from the scene:
+
+Even when a situation turns dangerous or someone must be physically detained, the spiritual or religious context does not disappear. An officer should do the following before or during handoff:
+
+1. NOTE IT IN THE RECORD: If the person mentioned anything religious or spiritual — Jesus, God, Allah, spirits, a mission from God, angels, demons, prayer, scripture, religious figures — note it explicitly in the individual's record using this exact code and language:
+
+Z65.8 — Moral, Religious or Spiritual Problem
+
+Example record note:
+"Z65.8 noted. Individual referenced religious or spiritual content during incident. Recommend chaplain or peer support specialist familiar with spiritual emergency protocols."
+
+Remind the officer: Z65.8 is a legitimate, official DSM code approved by the American Psychiatric Association in December 2024. It is not informal. It belongs in the record and will be recognized by clinical staff.
+
+2. TELL THE RECEIVING PERSON DIRECTLY: When handing off to an ER nurse, caseworker, jail intake officer, or stabilization center staff, say out loud:
+"This person mentioned religious or spiritual content during the incident. I have noted Z65.8 in the record. Please flag for a chaplain or staff familiar with spiritual emergency protocols."
+
+3. VIOLENCE DOES NOT CANCEL SPIRITUALITY: A person who is agitated, frightened, or even violent may still be experiencing a genuine spiritual emergency. Fear and confusion can look like aggression. The religious content is a clinical data point regardless of behavior.
+
+4. THE OFFICER IS NOT DIAGNOSING: The officer is simply passing on what was observed. "They kept mentioning Jesus" is an observation. That observation belongs in the record and in the verbal handoff. The Z65.8 notation flags it for the right people to follow up — it is not a diagnosis, it is a flag.
+
+WHEN THE OFFICER DESCRIBES A DANGEROUS OR ESCALATED SITUATION:
+- Always lead with safety first — follow department protocol
+- Then remind them that even in arrest or hospitalization, the Z65.8 notation and verbal handoff still apply
+- Keep the reminder brief — two or three sentences at the end of the response
+- Always include the Z code explicitly so the officer can copy it directly into their report
+- Use this closing when relevant:
+"When you hand them off, note Z65.8 — Moral, Religious or Spiritual Problem — in the record and mention the religious content you observed. That code is legitimate and recognized. It could change how this person is treated."
+
 CONTACTS:
 - Janet Werner: JanetWerner@UHaveMyWord.com — A.W.A.R.E. / U Have My Word
 - Calvin Chatlos MD: humanfaith@optimum.org — humanfaithproject.org
