@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#07111F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AWARE NJ" />
+  <meta name="description" content="A.W.A.R.E. New Jersey — Spiritual Emergency First Responder Reference" />
+  <title>A.W.A.R.E. NJ</title>
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- =====================================================
+       LOGO PLACEHOLDER INSTRUCTIONS FOR CLAUDE CODE:
+       Replace the SVG placeholder below with:
+       <link rel="apple-touch-icon" href="icons/icon-192.png" />
+       And place the AWARE logo PNG at public/icons/icon-192.png
+       and public/icons/icon-512.png
+       ===================================================== -->
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #07111F;
+      --surface: #0F1E30;
+      --surface2: #142438;
+      --border: rgba(255,255,255,0.07);
+      --text: #FFFFFF;
+      --text2: #CBD5E0;
+      --text3: #4A5568;
+      --text4: #2D3748;
+      --blue: #63B3ED;
+      --red: #E53E3E;
+      --amber: #F59E0B;
+      --green: #68D391;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ─── APP SHELL ─── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── STATUS BAR SPACER ─── */
+    .status-bar {
+      height: env(safe-area-inset-top, 0);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    /* ─── SCREENS ─── */
+    .screen {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .screen.active { display: flex; flex-direction: column; }
+
+    /* ─── HOME SCREEN ─── */
+    .home-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 20px 14px;
+    }
+
+    /* ── LOGO PLACEHOLDER ──
+       Replace .logo-placeholder with:
+       <img src="icons/icon-192.png" class="logo-img" alt="AWARE NJ Logo" />
+       and add CSS: .logo-img { width: 84px; height: 84px; border-radius: 50%; }
+    */
+    .logo-placeholder {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: rgba(99,179,237,0.1);
+      border: 2px dashed rgba(99,179,237,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .logo-placeholder svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .app-title {
+      font-size: 25px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    .app-state {
+      font-size: 11px;
+      color: var(--blue);
+      letter-spacing: 0.18em;
+      font-weight: 600;
+      margin-top: 3px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .app-subtitle {
+      font-size: 13px;
+      color: var(--text3);
+      margin-top: 7px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ─── NAV CARDS ─── */
+    .nav-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      padding: 0 14px 14px;
+    }
+
+    .nav-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 13px 15px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: opacity 0.15s;
+    }
+    .nav-card:active { opacity: 0.7; }
+
+    .nav-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .nav-card-icon svg { width: 23px; height: 23px; }
+
+    .nav-card-icon.blue { background: rgba(99,179,237,0.12); }
+    .nav-card-icon.red  { background: rgba(229,62,62,0.12); }
+    .nav-card-icon.amber{ background: rgba(245,158,11,0.12); }
+    .nav-card-icon.green{ background: rgba(104,211,145,0.12); }
+
+    .nav-card-text { flex: 1; }
+    .nav-card-title { font-size: 17px; font-weight: 600; color: var(--text); }
+    .nav-card-sub   { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    .nav-card-arrow { flex-shrink: 0; }
+    .nav-card-arrow svg { width: 16px; height: 16px; color: var(--text4); }
+
+    .home-footer {
+      text-align: center;
+      padding: 0 20px 11px;
+      font-size: 11px;
+      color: #1E3A5F;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── INNER SCREEN HEADER ─── */
+    .inner-header {
+      background: var(--bg);
+      padding: 11px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .back-btn {
+      background: rgba(255,255,255,0.06);
+      border: none;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .back-btn svg { width: 18px; height: 18px; color: #718096; }
+
+    .inner-title { font-size: 17px; font-weight: 600; color: var(--text); }
+
+    /* ─── INNER CONTENT ─── */
+    .inner-content { padding: 13px 16px 18px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+    .section-label {
+      font-size: 13px;
+      color: var(--text3);
+      line-height: 1.5;
+      margin-bottom: 11px;
+    }
+
+    /* ─── SIGNS SCREEN ─── */
+    .sign-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 11px 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .sign-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--text4);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .sign-check.checked {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .sign-check svg { width: 13px; height: 13px; color: var(--bg); }
+
+    .sign-text { font-size: 14px; color: var(--text2); line-height: 1.4; }
+
+    .alert-box {
+      display: none;
+      background: rgba(229,62,62,0.1);
+      border: 1px solid rgba(229,62,62,0.28);
+      border-radius: 14px;
+      padding: 14px 15px;
+      margin-top: 2px;
+      margin-bottom: 14px;
+    }
+
+    .alert-box.visible { display: block; }
+
+    .alert-title { font-size: 13px; font-weight: 600; color: var(--red); margin-bottom: 4px; }
+    .alert-body  { font-size: 13px; color: #718096; line-height: 1.4; }
+
+    .alert-cta {
+      margin-top: 10px;
+      background: var(--red);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      width: 100%;
+      font-family: var(--font);
+    }
+
+    .misuse-section { margin-top: 16px; }
+    .misuse-label {
+      font-size: 11px;
+      color: var(--text4);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 9px;
+    }
+
+    .tag-row { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .tag {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      padding: 5px 11px;
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    /* ─── PROTOCOL SCREEN ─── */
+    .protocol-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .protocol-card.step1 { border-left: 4px solid var(--red); }
+    .protocol-card.step2 { border-left: 4px solid var(--blue); }
+    .protocol-card.step3 { border-left: 4px solid var(--amber); }
+
+    .protocol-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .step-badge.red   { background: var(--red);   color: #fff; }
+    .step-badge.blue  { background: var(--blue);  color: var(--bg); }
+    .step-badge.amber { background: var(--amber); color: var(--bg); }
+
+    .step-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: 0.05em; }
+
+    .step-body {
+      font-size: 14px;
+      color: #718096;
+      line-height: 1.55;
+      padding-left: 38px;
+    }
+
+    .step-cta {
+      margin-top: 10px;
+      margin-left: 38px;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--amber);
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    /* ─── QUESTIONS SCREEN ─── */
+    .question-card {
+      background: var(--surface);
+      border: 1px solid rgba(245,158,11,0.18);
+      border-radius: 16px;
+      padding: 13px 15px;
+      margin-bottom: 9px;
+    }
+
+    .q-label {
+      font-size: 11px;
+      color: var(--amber);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    .q-text {
+      font-size: 16px;
+      color: #E8EDF5;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .q-hint {
+      margin-top: 7px;
+      font-size: 12px;
+      color: var(--text3);
+      line-height: 1.4;
+    }
+
+    .er-note {
+      background: rgba(99,179,237,0.06);
+      border: 1px solid rgba(99,179,237,0.14);
+      border-radius: 11px;
+      padding: 9px 12px;
+    }
+
+    .er-note-title { font-size: 11px; color: var(--blue); font-weight: 600; margin-bottom: 3px; }
+    .er-note-body  { font-size: 12px; color: var(--text3); line-height: 1.4; }
+    .er-note-code  { color: #A0AEC0; font-weight: 600; }
+
+    /* ─── REFERENCE SCREEN ─── */
+    .ref-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+
+    .ref-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 7px;
+    }
+
+    .z-code { font-size: 26px; font-weight: 700; color: var(--blue); font-family: 'Courier New', monospace; letter-spacing: 0.04em; }
+    .z-name { font-size: 14px; color: var(--text2); margin-top: 3px; }
+    .z-note { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 12px; color: var(--text3); line-height: 1.4; }
+
+    .term-row {
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .term-row:last-child { border-bottom: none; }
+    .term-name { font-size: 13px; color: #FC8181; }
+    .term-flag { font-size: 10px; color: var(--text4); }
+
+    .contact-block { margin-bottom: 9px; }
+    .contact-block:last-child { margin-bottom: 0; }
+    .contact-block + .contact-block { padding-top: 9px; border-top: 1px solid rgba(255,255,255,0.04); }
+
+    .contact-name  { font-size: 13px; font-weight: 600; color: var(--text2); }
+    .contact-email { font-size: 12px; color: var(--blue); margin-top: 2px; }
+    .contact-org   { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+    .coalition-badge {
+      background: rgba(99,179,237,0.04);
+      border: 1px solid rgba(99,179,237,0.1);
+      border-radius: 12px;
+      padding: 9px 13px;
+      text-align: center;
+      font-size: 10px;
+      color: var(--text4);
+      line-height: 1.4;
+      margin-bottom: 0;
+    }
+
+    /* ─── BOTTOM NAV ─── */
+    .bottom-nav {
+      height: 56px;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      background: var(--bg);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 10px;
+      min-width: 58px;
+      font-family: var(--font);
+    }
+
+    .nav-btn svg { width: 22px; height: 22px; }
+    .nav-btn span { font-size: 10px; font-weight: 500; }
+
+    .nav-btn.active svg, .nav-btn.active span { color: var(--blue); }
+    .nav-btn:not(.active) svg, .nav-btn:not(.active) span { color: #2D3748; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="status-bar"></div>
+
+  <!-- ═══════════════════════════════
+       SCREEN: HOME
+  ═══════════════════════════════ -->
+  <div id="screen-home" class="screen active">
+
+    <div class="home-header">
+
+      <!--
+        ╔══════════════════════════════════════════════════╗
+        ║  LOGO PLACEHOLDER — REPLACE IN CLAUDE CODE      ║
+        ║  1. Add logo PNG to /public/icons/logo.png       ║
+        ║  2. Delete the <div class="logo-placeholder">    ║
+        ║  3. Replace with:                                ║
+        ║     <img src="icons/logo.png"                    ║
+        ║          alt="AWARE NJ"                          ║
+        ║          style="width:84px;height:84px;          ║
+        ║                 border-radius:50%;               ║
+        ║                 margin-bottom:14px;"  />         ║
+        ╚══════════════════════════════════════════════════╝
+      -->
+<img src="icons/logo.png" alt="AWARE NJ" style="width:74px;height:74px;border-radius:50%;margin-bottom:10px;" />
+
+      <div class="app-title">A.W.A.R.E.</div>
+      <div class="app-state">New Jersey</div>
+      <div class="app-subtitle">Spiritual Emergency First Responder Reference</div>
+    </div>
+
+    <div class="nav-cards">
+
+      <button class="nav-card" onclick="nav('signs')">
+        <div class="nav-card-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#63B3ED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-card-title">Am I Seeing This?</div>
+          <div class="nav-card-sub">Signs to recognize</div>
+        </div>
+        <div class="nav-card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </button>
+
+      <button class="nav-card" onclick="nav('protocol')" style="border-color:rgba(229,62,62,0.15);">
+        <div class="nav-card-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E53E3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-card-title">What Do I Do?</div>
+          <div class="nav-card-sub">De-escalate · Listen · Ask</div>
+        </div>
+        <div class="nav-card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </button>
+
+      <button class="nav-card" onclick="nav('questions')">
+        <div class="nav-card-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-card-title">What Do I Ask?</div>
+          <div class="nav-card-sub">The 3 key questions</div>
+        </div>
+        <div class="nav-card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </button>
+
+      <button class="nav-card" onclick="nav('reference')">
+        <div class="nav-card-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#68D391" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-card-title">Quick Reference</div>
+          <div class="nav-card-sub">Z Code · terminology · contacts</div>
+        </div>
+        <div class="nav-card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </button>
+
+    </div>
+
+    <div class="home-footer">NJ Coalition of Religious, Spiritual and Mental Health Leaders</div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       SCREEN: SIGNS
+  ═══════════════════════════════ -->
+  <div id="screen-signs" class="screen">
+    <div class="inner-header">
+      <button class="back-btn" onclick="nav('home')" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="inner-title">Am I Seeing This?</div>
+    </div>
+
+    <div class="inner-content">
+      <p class="section-label">Tap signs you observe. Two or more may indicate a Spiritual Emergency.</p>
+
+      <div class="sign-row" onclick="toggleSign(this)">
+        <div class="sign-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="sign-text">Ecstatic mood or very elevated energy</div>
+      </div>
+
+      <div class="sign-row" onclick="toggleSign(this)">
+        <div class="sign-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="sign-text">Very quiet or withdrawn</div>
+      </div>
+
+      <div class="sign-row" onclick="toggleSign(this)">
+        <div class="sign-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="sign-text">Hearing voices or seeing visions</div>
+      </div>
+
+      <div class="sign-row" onclick="toggleSign(this)">
+        <div class="sign-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="sign-text">Unusual ideas linked to mythology or religion</div>
+      </div>
+
+      <div class="sign-row" onclick="toggleSign(this)">
+        <div class="sign-check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="sign-text">Perceptual alterations — altered sensory experience</div>
+      </div>
+
+      <div id="signs-alert" class="alert-box">
+        <div class="alert-title">Possible Spiritual Emergency</div>
+        <div class="alert-body">Do not dismiss spiritual content. Proceed to protocol.</div>
+        <button class="alert-cta" onclick="nav('protocol')">See Protocol →</button>
+      </div>
+
+      <div class="misuse-section">
+        <div class="misuse-label">Often mislabeled as:</div>
+        <div class="tag-row">
+          <span class="tag">Hyper-religiosity</span>
+          <span class="tag">Religious preoccupation</span>
+          <span class="tag">Religious fanaticism</span>
+          <span class="tag">Out of touch with reality</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       SCREEN: PROTOCOL
+  ═══════════════════════════════ -->
+  <div id="screen-protocol" class="screen">
+    <div class="inner-header">
+      <button class="back-btn" onclick="nav('home')" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="inner-title">What Do I Do?</div>
+    </div>
+
+    <div class="inner-content">
+
+      <div class="protocol-card step1">
+        <div class="protocol-header">
+          <div class="step-badge red">1</div>
+          <div class="step-title">DE-ESCALATE</div>
+        </div>
+        <div class="step-body">Lower your voice. Slow your pace. Create calm space. Reduce sirens, bright lights, and crowds where possible.</div>
+      </div>
+
+      <div class="protocol-card step2">
+        <div class="protocol-header">
+          <div class="step-badge blue">2</div>
+          <div class="step-title">LISTEN</div>
+        </div>
+        <div class="step-body">Without judgment. Do not dismiss or challenge spiritual content. Be fully present. Let them speak.</div>
+      </div>
+
+      <div class="protocol-card step3">
+        <div class="protocol-header">
+          <div class="step-badge amber">3</div>
+          <div class="step-title">ASK</div>
+        </div>
+        <div class="step-body">Ask the 3 key questions calmly and without judgment.</div>
+        <button class="step-cta" onclick="nav('questions')">See the 3 Questions →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       SCREEN: QUESTIONS
+  ═══════════════════════════════ -->
+  <div id="screen-questions" class="screen">
+    <div class="inner-header">
+      <button class="back-btn" onclick="nav('home')" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="inner-title">What Do I Ask?</div>
+    </div>
+
+    <div class="inner-content">
+      <p class="section-label">Ask these 3 questions calmly, without judgment.</p>
+
+      <div class="question-card">
+        <div class="q-label">Question 1</div>
+        <div class="q-text">"Do you sense something religious or spiritual is occurring?"</div>
+        <div class="q-hint">Opens the door. Validates their experience without diagnosing.</div>
+      </div>
+
+      <div class="question-card">
+        <div class="q-label">Question 2</div>
+        <div class="q-text">"Would you like a clergy member to be called for support?"</div>
+        <div class="q-hint">Respects their tradition. Bridges to appropriate spiritual care.</div>
+      </div>
+
+      <div class="question-card">
+        <div class="q-label">Question 3</div>
+        <div class="q-text">"Would a peer-support specialist familiar with your religious, spiritual, or cultural traditions be beneficial?"</div>
+        <div class="q-hint">Connects to culturally competent care.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       SCREEN: REFERENCE
+  ═══════════════════════════════ -->
+  <div id="screen-reference" class="screen">
+    <div class="inner-header">
+      <button class="back-btn" onclick="nav('home')" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="inner-title">Quick Reference</div>
+    </div>
+
+    <div class="inner-content">
+
+      <div class="ref-card">
+        <div class="ref-label">DSM Z Code</div>
+        <div class="z-code">Z65.8</div>
+        <div class="z-name">Moral, Religious or Spiritual Problem</div>
+        <div class="z-note">APA Board &amp; DSM Steering Committee approved definition, December 2024. Use this code in ER documentation.</div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-label">Terms Often Misapplied</div>
+        <div class="term-row"><span class="term-name">Hyper-religiosity</span><span class="term-flag">misapplied</span></div>
+        <div class="term-row"><span class="term-name">Religious preoccupation</span><span class="term-flag">misapplied</span></div>
+        <div class="term-row"><span class="term-name">Religious fanaticism</span><span class="term-flag">misapplied</span></div>
+        <div class="term-row" style="border-bottom:none;"><span class="term-name">Out of touch with reality</span><span class="term-flag">misapplied</span></div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-label">A.W.A.R.E. NJ Contacts</div>
+        <div class="contact-block">
+          <div class="contact-name">Janet Werner</div>
+          <div class="contact-email">JanetWerner@UHaveMyWord.com</div>
+          <div class="contact-org">A.W.A.R.E. · U Have My Word</div>
+        </div>
+        <div class="contact-block">
+          <div class="contact-name">Calvin Chatlos MD</div>
+          <div class="contact-email">humanfaith@optimum.org</div>
+          <div class="contact-org">humanfaithproject.org</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       BOTTOM NAV
+  ═══════════════════════════════ -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+
+    <button class="nav-btn active" id="nav-home" onclick="nav('home')" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>Home</span>
+    </button>
+
+    <button class="nav-btn" id="nav-signs" onclick="nav('signs')" aria-label="Signs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+      </svg>
+      <span>Signs</span>
+    </button>
+
+    <button class="nav-btn" id="nav-protocol" onclick="nav('protocol')" aria-label="Protocol">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+      <span>Protocol</span>
+    </button>
+
+    <button class="nav-btn" id="nav-questions" onclick="nav('questions')" aria-label="Ask">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>Ask</span>
+    </button>
+
+    <button class="nav-btn" id="nav-reference" onclick="nav('reference')" aria-label="Reference">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <span>Reference</span>
+    </button>
+
+  </nav>
+</div>
+
+<script>
+  // ─── NAVIGATION ───
+  var SCREENS = ['home','signs','protocol','questions','reference'];
+  var NAV_COLORS = {
+    home:     '#63B3ED',
+    signs:    '#63B3ED',
+    protocol: '#E53E3E',
+    questions:'#F59E0B',
+    reference:'#68D391'
+  };
+
+  function nav(id) {
+    SCREENS.forEach(function(s) {
+      var screen = document.getElementById('screen-' + s);
+      var btn    = document.getElementById('nav-' + s);
+      if (screen) screen.classList.toggle('active', s === id);
+      if (btn) {
+        btn.classList.toggle('active', s === id);
+        btn.style.color = (s === id) ? NAV_COLORS[s] : '#2D3748';
+      }
+    });
+    // scroll inner content to top
+    var activeScreen = document.getElementById('screen-' + id);
+    if (activeScreen) activeScreen.scrollTop = 0;
+  }
+
+  // ─── SIGN TOGGLE ───
+  var signCount = 0;
+
+  function toggleSign(row) {
+    var check = row.querySelector('.sign-check');
+    var on = row.getAttribute('data-on') === '1';
+
+    if (on) {
+      row.setAttribute('data-on', '0');
+      row.style.borderColor = 'rgba(255,255,255,0.07)';
+      check.classList.remove('checked');
+      signCount = Math.max(0, signCount - 1);
+    } else {
+      row.setAttribute('data-on', '1');
+      row.style.borderColor = 'rgba(99,179,237,0.3)';
+      check.classList.add('checked');
+      signCount++;
+    }
+
+    document.getElementById('signs-alert').classList.toggle('visible', signCount >= 2);
+  }
+
+  // ─── PWA SERVICE WORKER ───
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function() {});
+  }
+</script>
+
+</body>
+</html>
