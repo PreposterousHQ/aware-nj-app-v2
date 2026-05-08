@@ -1241,7 +1241,7 @@
   }
 
   // ─── WAKE WORD ───
-  var chatWakeState = 'stopped'; // 'stopped' | 'listening' | 'question' | 'paused'
+  var chatWakeState = 'stopped'; // 'stopped' | 'listening' | 'paused' | 'question' | 'processing'
   var chatWakeRecognizer = null;
   var chatWakeLockHandle = null;
   var chatLastReply = '';
@@ -1306,21 +1306,25 @@
       }
       return;
     }
-    if (chatWakeState !== 'paused') chatWakeStart();
+    // Resume from whatever state we left — paused keeps the mic running anyway
+    if (chatWakeState === 'stopped') chatWakeStart();
+    else if (chatWakeState === 'paused') chatWakeRestartRecognizer();
+    else chatWakeStart();
   }
 
   function chatWakeOnLeave() {
-    if (chatWakeState === 'listening' || chatWakeState === 'question') {
-      chatWakeStopSilent();
-    }
+    // Full stop when leaving the screen — avoids background mic usage
+    chatWakeStopSilent();
+    var prev = chatWakeState;
+    chatWakeState = (prev === 'paused') ? 'paused' : 'stopped';
+    chatWakeDotUpdate();
   }
 
-  function chatWakeStart() {
+  // Internal: start/restart the recognizer without changing state
+  function chatWakeRestartRecognizer() {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     chatWakeStopSilent();
-    chatWakeState = 'listening';
-    chatWakeDotUpdate();
 
     var rec = new SR();
     rec.continuous = true;
@@ -1329,23 +1333,27 @@
     chatWakeRecognizer = rec;
 
     rec.onresult = function(e) {
-      if (chatWakeState !== 'listening') return;
       var t = e.results[e.results.length - 1][0].transcript.trim().toLowerCase();
       var hasAware = /\baware\b/.test(t) || /\ba[\s-]ware\b/.test(t);
       if (!hasAware) return;
-      if (/\bstop\b/.test(t)) {
-        chatWakePause();
-      } else if (/\bstart\b/.test(t)) {
-        chatWakeResume();
-      } else if (/\brepeat\b/.test(t)) {
-        chatWakeRepeat();
-      } else {
-        chatWakeActivate();
+
+      if (chatWakeState === 'paused') {
+        // Only START and REPEAT are honored while paused
+        if (/\bstart\b/.test(t)) chatWakeResume();
+        else if (/\brepeat\b/.test(t)) chatWakeRepeat();
+        return;
       }
+
+      if (chatWakeState !== 'listening') return;
+
+      if (/\bstop\b/.test(t))   chatWakePause();
+      else if (/\bstart\b/.test(t))  chatWakeResume();
+      else if (/\brepeat\b/.test(t)) chatWakeRepeat();
+      else                           chatWakeActivate();
     };
 
-    rec.onerror = function(e) {
-      if (e.error === 'not-allowed') {
+    rec.onerror = function(ev) {
+      if (ev.error === 'not-allowed') {
         chatWakeState = 'stopped';
         chatWakeDotUpdate();
         if (!chatWakeUnsupportedShown) {
@@ -1354,14 +1362,26 @@
         }
         return;
       }
-      if (chatWakeState === 'listening') setTimeout(chatWakeStart, 1200);
+      // Restart on transient errors as long as we're in an active mode
+      if (chatWakeState === 'listening' || chatWakeState === 'paused') {
+        setTimeout(chatWakeRestartRecognizer, 1200);
+      }
     };
 
     rec.onend = function() {
-      if (chatWakeState === 'listening') setTimeout(chatWakeStart, 600);
+      // iOS Safari and some Android builds stop continuous recognition after silence — restart
+      if (chatWakeState === 'listening' || chatWakeState === 'paused') {
+        setTimeout(chatWakeRestartRecognizer, 600);
+      }
     };
 
     try { rec.start(); } catch(e) {}
+  }
+
+  function chatWakeStart() {
+    chatWakeState = 'listening';
+    chatWakeDotUpdate();
+    chatWakeRestartRecognizer();
   }
 
   function chatWakeStopSilent() {
@@ -1372,24 +1392,32 @@
   }
 
   function chatWakePause() {
+    // Stop mic while speaking "AWARE paused", then restart in paused mode
+    // so the officer can still say "AWARE START" or "AWARE REPEAT"
     chatWakeStopSilent();
     chatWakeState = 'paused';
     chatWakeDotUpdate();
-    chatSpeakText('AWARE paused', function() {});
+    chatSpeakText('AWARE paused', function() {
+      chatWakeRestartRecognizer(); // mic back on, but onresult gates to START/REPEAT only
+    });
   }
 
   function chatWakeResume() {
+    chatWakeStopSilent(); // silence mic while speaking
     chatPlayChime();
     chatSpeakText('AWARE NJ ready', function() {
-      chatWakeStart();
+      chatWakeStart(); // sets state to 'listening' and restarts mic
     });
   }
 
   function chatWakeRepeat() {
     if (!chatLastReply) return;
+    var prevState = chatWakeState;
     chatWakeStopSilent();
     chatSpeakText(chatLastReply, function() {
-      if (chatWakeState !== 'paused') chatWakeStart();
+      chatWakeState = prevState; // restore — paused stays paused, listening stays listening
+      chatWakeDotUpdate();
+      chatWakeRestartRecognizer();
     });
   }
 
@@ -1421,11 +1449,11 @@
         chatWakeSendQuestion(q);
       }
     };
-    rec.onerror = function() { chatWakeState = 'listening'; chatWakeStart(); };
+    rec.onerror = function() { chatWakeStart(); };
     rec.onend = function() {
-      if (chatWakeState === 'question') { chatWakeState = 'listening'; chatWakeStart(); }
+      if (chatWakeState === 'question') chatWakeStart();
     };
-    try { rec.start(); } catch(e) { chatWakeState = 'listening'; chatWakeStart(); }
+    try { rec.start(); } catch(e) { chatWakeStart(); }
   }
 
   function chatWakeSendQuestion(text) {
@@ -1448,15 +1476,11 @@
       chatHistory.push({role: 'assistant', content: reply});
       if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
       chatLastReply = reply;
-      chatSpeakText(reply, function() {
-        chatWakeState = 'listening';
-        chatWakeStart();
-      });
+      chatSpeakText(reply, function() { chatWakeStart(); });
     })
     .catch(function() {
       document.getElementById('chat-thinking').classList.remove('visible');
       chatAddMsg('assistant', 'Connection error. Please check your signal and try again.');
-      chatWakeState = 'listening';
       chatWakeStart();
     });
   }
