@@ -598,24 +598,6 @@
       50% { box-shadow: 0 0 0 8px rgba(229,62,62,0); }
     }
     .chat-mic-btn svg, .chat-send-btn svg { width: 18px; height: 18px; }
-
-    /* ─── WAKE DOT ─── */
-    .wake-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: #4A5568;
-      position: absolute; top: 50%; right: 16px;
-      transform: translateY(-50%);
-      transition: background 0.3s;
-      flex-shrink: 0;
-    }
-    .wake-dot.active {
-      background: #E53E3E;
-      animation: wakePulse 2s infinite ease-in-out;
-    }
-    @keyframes wakePulse {
-      0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
-      50% { opacity: 0.4; transform: translateY(-50%) scale(0.8); }
-    }
   </style>
 </head>
 <body>
@@ -945,14 +927,13 @@
        SCREEN: CHAT
   ═══════════════════════════════ -->
   <div id="screen-chat" class="screen" style="overflow:hidden;">
-    <div class="inner-header" style="position:relative;">
+    <div class="inner-header">
       <button class="back-btn" onclick="nav('home')" aria-label="Back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
       <div class="inner-title">AI Guide</div>
-      <div id="wake-dot" class="wake-dot" aria-hidden="true"></div>
     </div>
 
     <div class="chat-messages" id="chat-messages">
@@ -1068,19 +1049,8 @@
         btn.style.color = (s === id) ? NAV_COLORS[s] : '#2D3748';
       }
     });
-    // chat screen: scroll to bottom, start wake word + wake lock
-    // other screens: scroll to top, stop wake word + release wake lock
     var activeScreen = document.getElementById('screen-' + id);
-    if (id === 'chat') {
-      var msgs = document.getElementById('chat-messages');
-      if (msgs) msgs.scrollTop = msgs.scrollHeight;
-      chatWakeLockRequest();
-      chatWakeOnEnter();
-    } else {
-      if (activeScreen) activeScreen.scrollTop = 0;
-      chatWakeLockRelease();
-      chatWakeOnLeave();
-    }
+    if (activeScreen) activeScreen.scrollTop = 0;
   }
 
   // ─── SIGN TOGGLE ───
@@ -1188,7 +1158,6 @@
       chatAddMsg('assistant', reply);
       chatHistory.push({role: 'assistant', content: reply});
       if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-      chatLastReply = reply;
     })
     .catch(function() {
       document.getElementById('chat-thinking').classList.remove('visible');
@@ -1202,13 +1171,8 @@
       if (chatRecognizer) chatRecognizer.stop();
       chatListening = false;
       btn.classList.remove('listening');
-      // resume wake word if it was suspended for this mic session
-      if (chatMicSuspendedWake) { chatMicSuspendedWake = false; chatWakeStart(); }
       return;
     }
-    // suspend wake word while manual mic is active
-    chatMicSuspendedWake = (chatWakeState === 'listening');
-    if (chatMicSuspendedWake) chatWakeStopSilent();
     var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       chatAddMsg('assistant', 'Voice input is not supported on this device. Please type your question.');
@@ -1223,13 +1187,11 @@
       document.getElementById('chat-input').value = transcript;
       chatListening = false;
       btn.classList.remove('listening');
-      if (chatMicSuspendedWake) { chatMicSuspendedWake = false; }
       chatSend();
     };
     chatRecognizer.onerror = function() {
       chatListening = false;
       btn.classList.remove('listening');
-      if (chatMicSuspendedWake) { chatMicSuspendedWake = false; chatWakeStart(); }
     };
     chatRecognizer.onend = function() {
       chatListening = false;
@@ -1238,251 +1200,6 @@
     chatRecognizer.start();
     chatListening = true;
     btn.classList.add('listening');
-  }
-
-  // ─── WAKE WORD ───
-  var chatWakeState = 'stopped'; // 'stopped' | 'listening' | 'paused' | 'question' | 'processing'
-  var chatWakeRecognizer = null;
-  var chatWakeLockHandle = null;
-  var chatLastReply = '';
-  var chatMicSuspendedWake = false;
-  var chatWakeUnsupportedShown = false;
-
-  function chatWakeDotUpdate() {
-    var dot = document.getElementById('wake-dot');
-    if (dot) dot.classList.toggle('active', chatWakeState === 'listening' || chatWakeState === 'question');
-  }
-
-  function chatWakeLockRequest() {
-    if ('wakeLock' in navigator && !chatWakeLockHandle) {
-      navigator.wakeLock.request('screen').then(function(l) { chatWakeLockHandle = l; }).catch(function() {});
-    }
-  }
-
-  function chatWakeLockRelease() {
-    if (chatWakeLockHandle) {
-      chatWakeLockHandle.release().catch(function() {});
-      chatWakeLockHandle = null;
-    }
-  }
-
-  function chatPlayChime() {
-    try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      var t = ctx.currentTime;
-      function note(freq, start, end, vol) {
-        var o = ctx.createOscillator(), g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type = 'sine'; o.frequency.value = freq;
-        g.gain.setValueAtTime(0, t + start);
-        g.gain.linearRampToValueAtTime(vol, t + start + 0.05);
-        g.gain.exponentialRampToValueAtTime(0.001, t + end);
-        o.start(t + start); o.stop(t + end);
-      }
-      note(659, 0, 0.45, 0.22);   // E5
-      note(880, 0.32, 0.78, 0.22); // A5
-    } catch(e) {}
-  }
-
-  function chatSpeakText(text, onEnd) {
-    if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
-    if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.92;
-    u.onend = u.onerror = function() {
-      chatCurrentUtterance = null;
-      if (onEnd) setTimeout(onEnd, 350);
-    };
-    chatCurrentUtterance = u;
-    window.speechSynthesis.speak(u);
-  }
-
-  function chatWakeOnEnter() {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      if (!chatWakeUnsupportedShown) {
-        chatWakeUnsupportedShown = true;
-        chatAddMsg('assistant', 'Voice activation not supported on this browser. Use the mic button instead.');
-      }
-      return;
-    }
-    // Resume from whatever state we left — paused keeps the mic running anyway
-    if (chatWakeState === 'stopped') chatWakeStart();
-    else if (chatWakeState === 'paused') chatWakeRestartRecognizer();
-    else chatWakeStart();
-  }
-
-  function chatWakeOnLeave() {
-    // Full stop when leaving the screen — avoids background mic usage
-    chatWakeStopSilent();
-    var prev = chatWakeState;
-    chatWakeState = (prev === 'paused') ? 'paused' : 'stopped';
-    chatWakeDotUpdate();
-  }
-
-  // Internal: start/restart the recognizer without changing state
-  function chatWakeRestartRecognizer() {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    chatWakeStopSilent();
-
-    var rec = new SR();
-    rec.continuous = true;
-    rec.interimResults = false;
-    rec.lang = 'en-US';
-    chatWakeRecognizer = rec;
-
-    rec.onresult = function(e) {
-      var t = e.results[e.results.length - 1][0].transcript.trim().toLowerCase();
-      var hasAware = /\baware\b/.test(t) || /\ba[\s-]ware\b/.test(t);
-      if (!hasAware) return;
-
-      if (chatWakeState === 'paused') {
-        // Only START and REPEAT are honored while paused
-        if (/\bstart\b/.test(t)) chatWakeResume();
-        else if (/\brepeat\b/.test(t)) chatWakeRepeat();
-        return;
-      }
-
-      if (chatWakeState !== 'listening') return;
-
-      if (/\bstop\b/.test(t))   chatWakePause();
-      else if (/\bstart\b/.test(t))  chatWakeResume();
-      else if (/\brepeat\b/.test(t)) chatWakeRepeat();
-      else                           chatWakeActivate();
-    };
-
-    rec.onerror = function(ev) {
-      if (ev.error === 'not-allowed') {
-        chatWakeState = 'stopped';
-        chatWakeDotUpdate();
-        if (!chatWakeUnsupportedShown) {
-          chatWakeUnsupportedShown = true;
-          chatAddMsg('assistant', 'Microphone permission denied. Voice activation unavailable — use the mic button instead.');
-        }
-        return;
-      }
-      // Restart on transient errors as long as we're in an active mode
-      if (chatWakeState === 'listening' || chatWakeState === 'paused') {
-        setTimeout(chatWakeRestartRecognizer, 1200);
-      }
-    };
-
-    rec.onend = function() {
-      // iOS Safari and some Android builds stop continuous recognition after silence — restart
-      if (chatWakeState === 'listening' || chatWakeState === 'paused') {
-        setTimeout(chatWakeRestartRecognizer, 600);
-      }
-    };
-
-    try { rec.start(); } catch(e) {}
-  }
-
-  function chatWakeStart() {
-    chatWakeState = 'listening';
-    chatWakeDotUpdate();
-    chatWakeRestartRecognizer();
-  }
-
-  function chatWakeStopSilent() {
-    if (chatWakeRecognizer) {
-      try { chatWakeRecognizer.abort(); } catch(e) {}
-      chatWakeRecognizer = null;
-    }
-  }
-
-  function chatWakePause() {
-    // Stop mic while speaking "AWARE paused", then restart in paused mode
-    // so the officer can still say "AWARE START" or "AWARE REPEAT"
-    chatWakeStopSilent();
-    chatWakeState = 'paused';
-    chatWakeDotUpdate();
-    chatSpeakText('AWARE paused', function() {
-      chatWakeRestartRecognizer(); // mic back on, but onresult gates to START/REPEAT only
-    });
-  }
-
-  function chatWakeResume() {
-    chatWakeStopSilent(); // silence mic while speaking
-    chatPlayChime();
-    chatSpeakText('AWARE NJ ready', function() {
-      chatWakeStart(); // sets state to 'listening' and restarts mic
-    });
-  }
-
-  function chatWakeRepeat() {
-    if (!chatLastReply) return;
-    var prevState = chatWakeState;
-    chatWakeStopSilent();
-    chatSpeakText(chatLastReply, function() {
-      chatWakeState = prevState; // restore — paused stays paused, listening stays listening
-      chatWakeDotUpdate();
-      chatWakeRestartRecognizer();
-    });
-  }
-
-  function chatWakeActivate() {
-    chatWakeStopSilent();
-    chatWakeState = 'question';
-    chatWakeDotUpdate();
-    chatPlayChime();
-    chatSpeakText('AWARE NJ ready', function() {
-      chatWakeCaptureQuestion();
-    });
-  }
-
-  function chatWakeCaptureQuestion() {
-    if (chatWakeState !== 'question') return;
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    var rec = new SR();
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.lang = 'en-US';
-    chatWakeRecognizer = rec;
-
-    rec.onresult = function(e) {
-      var q = e.results[0][0].transcript.trim();
-      if (q) {
-        chatWakeState = 'processing';
-        chatWakeDotUpdate();
-        chatWakeSendQuestion(q);
-      }
-    };
-    rec.onerror = function() { chatWakeStart(); };
-    rec.onend = function() {
-      if (chatWakeState === 'question') chatWakeStart();
-    };
-    try { rec.start(); } catch(e) { chatWakeStart(); }
-  }
-
-  function chatWakeSendQuestion(text) {
-    chatAddMsg('user', text);
-    var historyToSend = chatHistory.slice();
-    chatHistory.push({role: 'user', content: text});
-    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-    document.getElementById('chat-thinking').classList.add('visible');
-    chatScrollBottom();
-    fetch('/.netlify/functions/chat', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, history: historyToSend})
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      document.getElementById('chat-thinking').classList.remove('visible');
-      var reply = data.reply || 'Sorry, I had trouble responding.';
-      chatAddMsg('assistant', reply);
-      chatHistory.push({role: 'assistant', content: reply});
-      if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-      chatLastReply = reply;
-      chatSpeakText(reply, function() { chatWakeStart(); });
-    })
-    .catch(function() {
-      document.getElementById('chat-thinking').classList.remove('visible');
-      chatAddMsg('assistant', 'Connection error. Please check your signal and try again.');
-      chatWakeStart();
-    });
   }
 
   // ─── PWA SERVICE WORKER ───
