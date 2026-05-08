@@ -1101,7 +1101,12 @@
       speakerBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
       var body = document.createElement('div');
       body.className = 'chat-body';
-      body.textContent = text;
+      body.innerHTML = text.split('\n').map(function(line) {
+        if (/^\d+\.\s/.test(line)) {
+          return '<div style="padding-top:8px;padding-left:4px;color:#fff;">' + line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+        }
+        return line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }).join('<br>');
       speakerBtn.onclick = function() { chatSpeak(speakerBtn); };
       header.appendChild(speakerBtn);
       wrap.appendChild(header);

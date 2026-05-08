@@ -33,7 +33,8 @@ HOW TO RESPOND:
 - Be calm and non-judgmental in tone — model the behavior you are recommending.
 - If asked something outside this topic, say: "I am focused on spiritual emergency response. For other questions, please consult your department resources."
 - Never diagnose. Never tell the officer what the person is experiencing. Guide the officer's actions only.
-- If the officer seems distressed themselves, acknowledge it briefly and refocus on the next concrete step they can take.`;
+- If the officer seems distressed themselves, acknowledge it briefly and refocus on the next concrete step they can take.
+- Never use asterisks or markdown formatting. When listing items, use plain numbered format like: 1. item 2. item 3. item — each on its own line.`;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -97,7 +98,12 @@ exports.handler = async function (event) {
     }
 
     const data = await response.json();
-    const reply = data.content?.[0]?.text ?? '';
+    let reply = data.content?.[0]?.text ?? '';
+    reply = reply
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/#{1,6}\s/g, '')
+      .trim();
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ reply }) };
   } catch (err) {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
