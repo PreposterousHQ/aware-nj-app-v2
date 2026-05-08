@@ -1292,6 +1292,7 @@
         chatAddMsg('assistant', 'Voice input is not supported on this browser. Use the mic button instead.');
         return;
       }
+      chatHFState = 'listening'; // must be non-'off' before chatHFCapture runs its guard
       chatHFCapture();
     }
   }
