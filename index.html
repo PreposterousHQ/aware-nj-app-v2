@@ -29,8 +29,8 @@
       --border: rgba(255,255,255,0.07);
       --text: #FFFFFF;
       --text2: #CBD5E0;
-      --text3: #4A5568;
-      --text4: #2D3748;
+      --text3: #94A3B8;
+      --text4: #64748B;
       --blue: #63B3ED;
       --red: #E53E3E;
       --amber: #F59E0B;
@@ -182,7 +182,7 @@
       text-align: center;
       padding: 0 20px 11px;
       font-size: 11px;
-      color: #1E3A5F;
+      color: #64748B;
       letter-spacing: 0.06em;
     }
 
@@ -212,7 +212,7 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    .back-btn svg { width: 18px; height: 18px; color: #718096; }
+    .back-btn svg { width: 18px; height: 18px; color: #94A3B8; }
 
     .inner-title { font-size: 17px; font-weight: 600; color: var(--text); }
 
@@ -275,7 +275,7 @@
     .alert-box.visible { display: block; }
 
     .alert-title { font-size: 13px; font-weight: 600; color: var(--red); margin-bottom: 4px; }
-    .alert-body  { font-size: 13px; color: #718096; line-height: 1.4; }
+    .alert-body  { font-size: 13px; color: #94A3B8; line-height: 1.4; }
 
     .alert-cta {
       margin-top: 10px;
@@ -351,7 +351,7 @@
 
     .step-body {
       font-size: 14px;
-      color: #718096;
+      color: #94A3B8;
       line-height: 1.55;
       padding-left: 38px;
     }
@@ -494,7 +494,7 @@
     .nav-btn span { font-size: 10px; font-weight: 500; }
 
     .nav-btn.active svg, .nav-btn.active span { color: var(--blue); }
-    .nav-btn:not(.active) svg, .nav-btn:not(.active) span { color: #2D3748; }
+    .nav-btn:not(.active) svg, .nav-btn:not(.active) span { color: #64748B; }
 
     /* ─── CHAT SCREEN ─── */
     .nav-card-icon.purple { background: rgba(183,148,244,0.12); }
@@ -1107,7 +1107,7 @@
       if (screen) screen.classList.toggle('active', s === id);
       if (btn) {
         btn.classList.toggle('active', s === id);
-        btn.style.color = (s === id) ? NAV_COLORS[s] : '#2D3748';
+        btn.style.color = (s === id) ? NAV_COLORS[s] : '#64748B';
       }
     });
     if (id !== 'chat') chatHFStop();
