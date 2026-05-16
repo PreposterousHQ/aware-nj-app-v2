@@ -1109,6 +1109,7 @@
       }
     });
     if (id !== 'chat') chatHFStop();
+    if (id === 'chat') chatReset();
     var activeScreen = document.getElementById('screen-' + id);
     if (activeScreen) activeScreen.scrollTop = 0;
   }
@@ -1293,6 +1294,29 @@
       chatHFState = 'listening'; // must be non-'off' before chatHFCapture runs its guard
       chatHFCapture();
     }
+  }
+
+  function chatReset() {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+    chatCurrentUtterance = null;
+    chatHFStop();
+    if (chatListening && chatRecognizer) {
+      try { chatRecognizer.abort(); } catch(e) {}
+      chatListening = false;
+      var micBtn = document.getElementById('chat-mic');
+      if (micBtn) micBtn.classList.remove('listening');
+    }
+    var thinking = document.getElementById('chat-thinking');
+    if (thinking) thinking.classList.remove('visible');
+    var msgs = document.getElementById('chat-messages');
+    if (msgs) {
+      var allMsgs = msgs.querySelectorAll('.chat-msg');
+      for (var i = 1; i < allMsgs.length; i++) allMsgs[i].remove();
+      msgs.scrollTop = 0;
+    }
+    chatHistory = [];
+    var input = document.getElementById('chat-input');
+    if (input) input.value = '';
   }
 
   function chatHFStop() {
